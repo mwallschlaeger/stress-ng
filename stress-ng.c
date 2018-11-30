@@ -1791,6 +1791,13 @@ static const help_t help_stressors[] = {
 	{ NULL,		NULL,			NULL }
 };
 
+
+/* PYTHON WRAPPER */
+void build_args_t(args_t *args, const char *name){
+	args->name = name;
+}
+
+
 /*
  *  stressor_name_find()
  *  	Find index into stressors by name

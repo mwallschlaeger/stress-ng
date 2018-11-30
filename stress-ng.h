@@ -2806,6 +2806,13 @@ extern WARN_UNUSED int stress_drop_capabilities(const char *name);
 extern WARN_UNUSED bool is_dot_filename(const char *name);
 extern WARN_UNUSED void *deconstify(const void *ptr);
 
+/* Python Wrapper Functions */
+extern void build_args_t(args_t *args, const char *name);
+extern int HOT OPTIMIZE3 stress_cpu(const args_t *args);
+extern int HOT OPTIMIZE3 ms_sim_stress_cpu(const char *name);
+extern int stress_malloc(const args_t *args);
+
+
 /*
  *  Indicate a stress test failed because of limited resources
  *  rather than a failure of the tests during execution.

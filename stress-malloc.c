@@ -71,7 +71,9 @@ static inline size_t stress_alloc_size(const size_t malloc_bytes)
  *	stress malloc by performing a mix of
  *	allocation and frees
  */
-static int stress_malloc(const args_t *args)
+//static int stress_malloc(const args_t *args)
+int stress_malloc(const args_t *args)
+
 {
 	pid_t pid;
 	uint32_t restarts = 0, nomems = 0;
@@ -109,7 +111,7 @@ again:
 	if (pid < 0) {
 		if (g_keep_stressing_flag && (errno == EAGAIN))
 			goto again;
-		pr_err("%s: fork failed: errno=%d: (%s)\n",
+		printf("%s: fork failed: errno=%d: (%s)\n",
 			args->name, errno, strerror(errno));
 	} else if (pid > 0) {
 		int status, ret;
@@ -121,27 +123,27 @@ again:
 		ret = waitpid(pid, &status, 0);
 		if (ret < 0) {
 			if (errno != EINTR)
-				pr_dbg("%s: waitpid(): errno=%d (%s)\n",
+				printf("%s: waitpid(): errno=%d (%s)\n",
 					args->name, errno, strerror(errno));
 			(void)kill(pid, SIGTERM);
 			(void)kill(pid, SIGKILL);
 			(void)waitpid(pid, &status, 0);
 		} else if (WIFSIGNALED(status)) {
-			pr_dbg("%s: child died: %s (instance %d)\n",
+			printf("%s: child died: %s (instance %d)\n",
 				args->name, stress_strsignal(WTERMSIG(status)),
 				args->instance);
 			/* If we got killed by OOM killer, re-start */
 			if (WTERMSIG(status) == SIGKILL) {
 				if (g_opt_flags & OPT_FLAGS_OOMABLE) {
 					log_system_mem_info();
-					pr_dbg("%s: assuming killed by OOM "
+					printf("%s: assuming killed by OOM "
 						"killer, bailing out "
 						"(instance %d)\n",
 						args->name, args->instance);
 					_exit(0);
 				} else {
 						log_system_mem_info();
-						pr_dbg("%s: assuming killed by OOM "
+						printf("%s: assuming killed by OOM "
 							"killer, restarting again "
 							"(instance %d)\n",
 							args->name, args->instance);
@@ -218,7 +220,7 @@ abort:
 		}
 	}
 	if (restarts + nomems > 0)
-		pr_dbg("%s: OOM restarts: %" PRIu32
+		printf("%s: OOM restarts: %" PRIu32
 			", out of memory restarts: %" PRIu32 ".\n",
 			args->name, restarts, nomems);
 

@@ -30,7 +30,7 @@ ifeq ($(PEDANTIC),1)
 CFLAGS += -Wcast-qual -Wfloat-equal -Wmissing-declarations \
 	-Wmissing-format-attribute -Wno-long-long -Wpacked \
 	-Wredundant-decls -Wshadow -Wno-missing-field-initializers \
-	-Wno-missing-braces -Wno-sign-compare -Wno-multichar
+	-Wno-missing-braces -Wno-sign-compare -Wno-multichar 
 endif
 
 GREP = grep
@@ -336,7 +336,7 @@ all:
 ifneq ("$(wildcard config)","")
 	$(MAKE) makeconfig
 endif
-	$(MAKE) stress-ng
+	$(MAKE) stress-ng.so
 
 .SUFFIXES: .c .o
 
@@ -344,11 +344,13 @@ endif
 
 .c.o: stress-ng.h Makefile $(SRC)
 	@echo "CC $<"
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -c -fPIC -o $@ $<
 
-stress-ng: $(OBJS)
+stress-ng.so: $(OBJS)
 	@echo "LD $@"
-	@$(CC) $(CPPFLAGS) $(CFLAGS) $(OBJS) -lm $(LDFLAGS) -o $@
+	#@$(CC)  $(OBJS) -fPIC -shared -o $@
+	@$(CC) $(CPPFLAGS) $(CFLAGS) $(OBJS) -lm $(LDFLAGS) -fPIC -shared -o $@
+	#@$(CC) $(CPPFLAGS) $(CFLAGS) $(OBJS) -lm $(LDFLAGS) -o $@
 	@sync
 
 makeconfig:
@@ -383,14 +385,14 @@ personality.h:
 stress-personality.c: personality.h
 
 perf.o: perf.c perf-event.c
-	@$(CC) $(CFLAGS) -E perf-event.c | grep "PERF_COUNT" | sed 's/,/ /' | \
+	@$(CC) $(CFLAGS) -fPIC -shared  -E perf-event.c | grep "PERF_COUNT" | sed 's/,/ /' | \
 	awk {'print "#define _SNG_" $$1 " (1)"'} > perf-event.h
 	@echo CC $<
-	@$(CC) $(CFLAGS) -c -o $@ $<
+	@$(CC) $(CFLAGS) -fPIC -shared -c -o $@ $<
 
 stress-vecmath.o: stress-vecmath.c
 	@echo CC $<
-	@$(CC) $(CFLAGS) -fno-builtin -c -o $@ $<
+	@$(CC) $(CFLAGS) -fPIC -shared -fno-builtin -c -o $@ $<
 	@touch stress-ng.c
 
 $(OBJS): stress-ng.h Makefile

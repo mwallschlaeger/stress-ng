@@ -1,4 +1,4 @@
 perf-event.h
 personality.h
-stress-ng
+stress-ng.so
 *.o
