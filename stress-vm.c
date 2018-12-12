@@ -1940,12 +1940,91 @@ int stress_set_vm_method(const char *name)
 	return -1;
 }
 
+/*
+ *  ms_sim_stress_vm()
+ *	stress virtual memory (only one iteration)
+ */
+int ms_sim_stress_vm(const args_t *args)
+{
+	/* initialize */
+	uint64_t *bit_error_count = MAP_FAILED;
+	uint64_t vm_hang = DEFAULT_VM_HANG;
+	size_t vm_bytes = DEFAULT_VM_BYTES;
+	uint8_t *buf = NULL;
+	//const bool keep = (g_opt_flags & OPT_FLAGS_VM_KEEP);
+    const size_t page_size = args->page_size;
+	size_t buf_sz, retries;
+	int vm_flags = 0;                      /* VM mmap flags */
+	int vm_madvise = -1;
+
+	/* get method, else first */
+	const stress_vm_method_info_t *vm_method = &vm_methods[0];
+	(void)get_setting("vm-method", &vm_method);
+	stress_vm_func func;
+
+
+	/* using default vm-hang for now */
+	(void)get_setting("vm-hang", &vm_hang);
+	(void)get_setting("vm-method", &vm_method);
+	/* for now only considering default -1, that will lead to random madvise */
+	(void)get_setting("vm-madvise", &vm_madvise);
+	func = vm_method->func;
+
+	/* if no vm_bytes set use minimal */
+	if (!get_setting("vm-bytes", &vm_bytes)) {
+		vm_bytes = MIN_VM_BYTES;
+	}
+
+	buf_sz = vm_bytes & ~(page_size - 1);
+	for (retries = 0; (retries < 100) ; retries++) {
+		bit_error_count = (uint64_t *)
+			mmap(NULL, page_size, PROT_READ | PROT_WRITE,
+				MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+		if (bit_error_count != MAP_FAILED)
+			break;
+		(void)shim_usleep(100);
+	}
+
+	/* Cannot allocate a single page for bit error counter */
+	if (bit_error_count == MAP_FAILED) {
+		return EXIT_FAILURE;
+	}
+	const uint64_t max_ops = args->max_ops << VM_BOGO_SHIFT;
+	/* Make sure this is killable by OOM killer */
+	set_oom_adjustment(args->name, true);
+	/* try allocate memory */
+	buf = (uint8_t *)mmap(NULL, buf_sz,
+			PROT_READ | PROT_WRITE,
+			MAP_PRIVATE | MAP_ANONYMOUS |
+			vm_flags, -1, 0);
+
+	/* could not allocate mem */
+	if (buf == MAP_FAILED) {
+		return EXIT_FAILURE;
+	}
+
+	/* handle madvise */
+	if (vm_madvise < 0){
+		(void)madvise_random(buf, buf_sz);
+	}else{
+		(void)shim_madvise(buf, buf_sz, vm_madvise);
+	}
+	/* real function call */
+	(void)mincore_touch_pages(buf, buf_sz);
+	*bit_error_count += func(buf, buf_sz, args, max_ops);
+
+	/* i dont know */
+	(void)madvise_random(buf, buf_sz);
+	(void)munmap((void *)buf, buf_sz);
+
+	return EXIT_SUCCESS;
+}
 
 /*
  *  stress_vm()
  *	stress virtual memory
  */
-static int stress_vm(const args_t *args)
+int stress_vm(const args_t *args)
 {
 	uint64_t *bit_error_count = MAP_FAILED;
 	uint64_t vm_hang = DEFAULT_VM_HANG;
