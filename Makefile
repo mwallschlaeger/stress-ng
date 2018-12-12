@@ -419,7 +419,7 @@ pdf:
 
 .PHONY: clean
 clean:
-	@rm -f stress-ng $(OBJS) stress-ng.1.gz stress-ng.pdf
+	@rm -f stress-ng.so $(OBJS) stress-ng.1.gz stress-ng.pdf
 	@rm -f stress-ng-$(VERSION).tar.xz
 	@rm -f personality.h
 	@rm -f perf-event.h
