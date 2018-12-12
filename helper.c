@@ -1326,3 +1326,18 @@ void *deconstify(const void *ptr)
 	return (void *)ptr;
 }
 PRAGMA_POP
+
+/* debug function to print args_t struct */
+void print_args_t(const args_t *args)
+{
+	printf("counter: %lu \
+		   ,name: %s, \
+		   max_ops: %ju ,\
+		   instance: %lu ,\
+		   num_instances: %lu ,\
+		   pid: %d ,\
+		   ppid: %d ,\
+		   page_size: %zu \n",
+		   (unsigned long)args->counter, args->name, args->max_ops, (unsigned long)args->instance,(unsigned long)args->num_instances, args->pid, args->ppid, args->page_size);
+
+}
