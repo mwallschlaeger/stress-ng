@@ -1,3 +1,12 @@
+fork
+
+this is a fork of the stress-ng project, with the goal to implement python3-binding 
+using ctypes for several stress functions of stress-ng.
+
+Currently supporting:
+  * stress-cpu functions
+  * stress-vm functions
+
 stress-ng
 
 stress-ng will stress test a computer system in various selectable ways. It
