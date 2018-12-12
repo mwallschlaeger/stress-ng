@@ -2401,6 +2401,10 @@ int stress_set_cpu_method(const char *name)
 	return -1;
 }
 
+/*
+ * ms_sim_stress_cpu()
+ * stress CPU by doing floating point math ops (only one iteration)
+ */
 int HOT OPTIMIZE3 ms_sim_stress_cpu(const char *name){
 	const stress_cpu_method_info_t *cpu_method = &cpu_methods[0];
 	stress_cpu_func func;
@@ -2415,7 +2419,7 @@ int HOT OPTIMIZE3 ms_sim_stress_cpu(const char *name){
  *  stress_cpu()
  *	stress CPU by doing floating point math ops
  */
-int HOT OPTIMIZE3 stress_cpu(const args_t *args)
+ int HOT OPTIMIZE3 stress_cpu(const args_t *args)
 {
 	double bias;
 	const stress_cpu_method_info_t *cpu_method = &cpu_methods[0];
@@ -2457,7 +2461,7 @@ int HOT OPTIMIZE3 stress_cpu(const args_t *args)
 	 * enough for most purposes.
 	 */
 	bias = 0.0;
-	//do {
+	do {
 		double t, delay;
 		double t1, t2, t3;
 		struct timeval tv;
@@ -2508,7 +2512,7 @@ int HOT OPTIMIZE3 stress_cpu(const args_t *args)
 		t3 = time_now();
 		/* Bias takes account of the time to do the delay */
 		bias = (t3 - t2) - delay;
-	//} while (keep_stressing());
+	} while (keep_stressing());
 
 	return EXIT_SUCCESS;
 }
