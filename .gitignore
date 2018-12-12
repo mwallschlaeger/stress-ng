@@ -2,3 +2,4 @@ perf-event.h
 personality.h
 stress-ng.so
 *.o
+config
