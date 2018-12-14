@@ -5,7 +5,7 @@
 import ctypes,os,logging
 
 STRESS_NG_NAME = "STRESS_NG_BINDINGS"
-
+SHARED_LIB_LOCATION = "stress-ng/stress-ng.so"
 ''' structure used in stress-ng c code to run stress functions '''
 class ARGS_T(ctypes.Structure):
 	     _fields_ = [
@@ -40,7 +40,7 @@ def build_args_t(counter=1,name="",max_ops=1,instance=1,num_instances=1,do_print
 		print_args_t(c_args_t_p)
 	return c_args_t_p
 
-_stress_ng = ctypes.CDLL('../stress-ng.so')
+_stress_ng = ctypes.CDLL(SHARED_LIB_LOCATION)
 
 ####################
 # helper functions #
@@ -156,7 +156,7 @@ def prepare_stress_cpu(method,load=None):
 
 ''' default stress_cpu function in stress-ng, non stop stress '''
 _stress_ng.stress_cpu.argtype = (ARGS_T)
-def stress_cpu(method,load=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
+def stress_cpu(method=CPU_DEFAULT_METHOD,load=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
 	method = prepare_stress_cpu(method,load)
 	if method is None:
 		return 1
@@ -172,7 +172,7 @@ def stress_cpu(method,load=None,counter=1,max_ops=1,instance=1,num_instances=1,d
 
 ''' one iteration of cpu stress method from cpu_method list '''
 _stress_ng.ms_sim_stress_cpu.argtype = (ctypes.c_char_p)
-def ms_sim_stress_cpu(method,load=None):
+def ms_sim_stress_cpu(method=CPU_DEFAULT_METHOD,load=None):
 	method = prepare_stress_cpu(method,load)
 	if method is None:
 		return 1
@@ -241,7 +241,7 @@ def prepare_stress_vm(method,vm_bytes=None):
 
 ''' default stress_vm function in stress-ng, non stop stress '''
 _stress_ng.stress_vm.argtype = (ARGS_T)
-def stress_vm(method,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
+def stress_vm(method=VM_DEFAULT_METHOD,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
 	method = prepare_stress_vm(method,vm_bytes)
 	if method is None:
 		return 1
@@ -258,7 +258,7 @@ def stress_vm(method,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=
 
 ''' one iteration of vm stress method from vm_method list '''
 _stress_ng.ms_sim_stress_vm.argtype = (ARGS_T)
-def ms_sim_stress_vm(method,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
+def ms_sim_stress_vm(method=VM_DEFAULT_METHOD,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
 	method = prepare_stress_vm(method,vm_bytes)
 	if method is None:
 		return 1
