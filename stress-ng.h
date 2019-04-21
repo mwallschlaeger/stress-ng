@@ -2817,6 +2817,12 @@ extern int HOT OPTIMIZE3 ms_sim_stress_cpu(const char *name);
 extern int ms_sim_stress_vm(const args_t *args);
 extern int stress_vm(const args_t *args);
 
+/* HDD */
+extern int stress_hdd(const args_t *args);
+//extern ssize_t stress_hdd_write(const int fd, uint8_t *buf,	const size_t count,	const uint64_t hdd_write_size, const int hdd_flags)
+//extern ssize_t stress_hdd_read(const int fd, uint8_t *buf, const size_t count, const uint64_t hdd_write_size, const int hdd_flags)
+
+
 /* MEM  (NOT IMPLEMENTED YET) */
 //extern int stress_malloc(const args_t *args);
 

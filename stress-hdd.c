@@ -324,7 +324,7 @@ static int stress_hdd_advise(const args_t *args, const int fd, const int flags)
  *  stress_hdd
  *	stress I/O via writes
  */
-static int stress_hdd(const args_t *args)
+int stress_hdd(const args_t *args)
 {
 	uint8_t *buf = NULL;
 	void *alloc_buf;

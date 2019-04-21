@@ -5,19 +5,32 @@
 import ctypes,os,logging
 
 STRESS_NG_NAME = "STRESS_NG_BINDINGS"
+SHARED_LIB_LOCATION = "../stress-ng.so"
 
+#SHARED_LIB_LOCATION = "stress-ng/stress-ng.so"
 ''' structure used in stress-ng c code to run stress functions '''
 class ARGS_T(ctypes.Structure):
-	     _fields_ = [
-	     			("counter", ctypes.POINTER(ctypes.c_uint64)), 	# stressor counter 
-	                ("name", ctypes.POINTER(ctypes.c_char)), 		#  stressor name
-	                ("max_ops", ctypes.c_uint64),					# max number of bogo ops 
-	                ("instance", ctypes.c_uint32),					# stressor instance 
-	                ("num_instances", ctypes.c_uint32),				# number of instances 
-	                ("pid", ctypes.c_int),							# stressor pid 
-	                ("ppid", ctypes.c_int),							# stressor ppid 
-	                ("page_size", ctypes.c_size_t)					# page size 
-	                ]
+		_fields_ = [
+					("counter", ctypes.POINTER(ctypes.c_uint64)), 	# stressor counter 
+					("name", ctypes.POINTER(ctypes.c_char)), 		#  stressor name
+					("max_ops", ctypes.c_uint64),					# max number of bogo ops 
+					("instance", ctypes.c_uint32),					# stressor instance 
+					("num_instances", ctypes.c_uint32),				# number of instances 
+					("pid", ctypes.c_int),							# stressor pid 
+					("ppid", ctypes.c_int),							# stressor ppid 
+					("page_size", ctypes.c_size_t)					# page size 
+					]
+
+class HDD_OPTS_T(ctypes.Structure):
+		_fields_ =  [
+					("opt", ctypes.POINTER(ctypes.c_char)),			# User option
+					("flag",ctypes.c_int),							# HDD_OPT_ flag
+					("exclude",ctypes.c_int),						# Excluded HDD_OPT_ flags
+					("advice",ctypes.c_int),						# posix_fadvise value
+					("oflag",ctypes.c_int)							# open O_* flags
+					]
+
+
 
 ''' build ctypes char array from python string '''
 def build_ctypes_char_array(string):
@@ -40,7 +53,20 @@ def build_args_t(counter=1,name="",max_ops=1,instance=1,num_instances=1,do_print
 		print_args_t(c_args_t_p)
 	return c_args_t_p
 
-_stress_ng = ctypes.CDLL('../stress-ng.so')
+''' build ctypes HDD_OPTS_T struct required by HDD related stress-ng functions '''
+def build_hdd_opts_t(method):
+	#if hdd_opts == "wr-seq":
+	hdd_opts_t = HDD_OPTS_T(
+								opt=build_ctypes_char_array(method),
+								flag=ctypes.c_int(0x00000001),
+								exclude=ctypes.c_int(0x00000002),
+								advice=ctypes.c_int(0),
+								oflag=ctypes.c_int(0))
+	c_hdd_opts_t_p = ctypes.pointer(hdd_opts_t)
+	return c_hdd_opts_t_p
+
+''' load sharedlib '''
+_stress_ng = ctypes.CDLL(SHARED_LIB_LOCATION)
 
 ####################
 # helper functions #
@@ -156,7 +182,7 @@ def prepare_stress_cpu(method,load=None):
 
 ''' default stress_cpu function in stress-ng, non stop stress '''
 _stress_ng.stress_cpu.argtype = (ARGS_T)
-def stress_cpu(method,load=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
+def stress_cpu(method=CPU_DEFAULT_METHOD,load=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
 	method = prepare_stress_cpu(method,load)
 	if method is None:
 		return 1
@@ -172,7 +198,7 @@ def stress_cpu(method,load=None,counter=1,max_ops=1,instance=1,num_instances=1,d
 
 ''' one iteration of cpu stress method from cpu_method list '''
 _stress_ng.ms_sim_stress_cpu.argtype = (ctypes.c_char_p)
-def ms_sim_stress_cpu(method,load=None):
+def ms_sim_stress_cpu(method=CPU_DEFAULT_METHOD,load=None):
 	method = prepare_stress_cpu(method,load)
 	if method is None:
 		return 1
@@ -207,7 +233,7 @@ VM_METHODS = [
 	"zero-one"
 	]
 VM_DEFAULT_METHOD = "zero-one"
-VM_BYTES_DEFAULT = 4096 * 1000 # 4 MB
+VM_BYTES_DEFAULT = 1024 * 4000 # 4 MB
 
 # not implemented yet, using defaults for now
 #_stress_ng.stress_set_vm_flags.argtype(ctypes.c_int)
@@ -241,7 +267,7 @@ def prepare_stress_vm(method,vm_bytes=None):
 
 ''' default stress_vm function in stress-ng, non stop stress '''
 _stress_ng.stress_vm.argtype = (ARGS_T)
-def stress_vm(method,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
+def stress_vm(method=VM_DEFAULT_METHOD,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
 	method = prepare_stress_vm(method,vm_bytes)
 	if method is None:
 		return 1
@@ -258,7 +284,7 @@ def stress_vm(method,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=
 
 ''' one iteration of vm stress method from vm_method list '''
 _stress_ng.ms_sim_stress_vm.argtype = (ARGS_T)
-def ms_sim_stress_vm(method,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
+def ms_sim_stress_vm(method=VM_DEFAULT_METHOD,vm_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
 	method = prepare_stress_vm(method,vm_bytes)
 	if method is None:
 		return 1
@@ -272,6 +298,71 @@ def ms_sim_stress_vm(method,vm_bytes=None,counter=1,max_ops=1,instance=1,num_ins
 	
 	result = _stress_ng.ms_sim_stress_vm(c_args_t_p)
 	return result
+
+#################
+# HDD functions #
+#################
+
+
+HDD_METHODS = [ 
+		"wr-seq",	# write sequential
+		"wr-rnd",	# write random
+		"rd-seq",	# read sequential
+		"rd-rnd",	# read random
+		]
+
+HDD_DEFAULT_METHOD = "wr-seq"
+HDD_BYTES_DEFAULT = 1024 * 16000 # 16 MB
+
+
+''' set hdd method read|write and sequential|random '''
+_stress_ng.stress_set_hdd_opts.argtype = (ctypes.c_char_p)
+def stress_set_hdd_opts(method):
+	#c_hdd_opts_t_p = build_hdd_opts_t(method)
+	return _stress_ng.stress_set_hdd_opts(build_ctypes_char_array(method))
+
+''' set hdd bytes used in stress-ng c code '''
+_stress_ng.stress_set_hdd_bytes.argtype = (ctypes.c_char_p)
+def stress_set_hdd_bytes(hdd_bytes):
+	hdd_bytes = str(hdd_bytes)
+	return _stress_ng.stress_set_hdd_bytes(build_ctypes_char_array(hdd_bytes))
+
+''' set hdd bytes used in stress-ng c code '''
+_stress_ng.stress_set_hdd_write_size.argtype = (ctypes.c_char_p)
+def stress_set_hdd_write_size(hdd_write_size):
+	hdd_write_size = str(hdd_write_size)
+	return _stress_ng.stress_set_hdd_write_size(build_ctypes_char_array(hdd_write_size))
+
+
+''' set method and hdd-bytes, check for parm failures'''
+def prepare_stress_hdd(method,hdd_bytes=None):
+	if method not in HDD_METHODS:
+		logging.warning("{}: HDD-Method {} not available, using default method {}".format(STRESS_NG_NAME,method,HDD_DEFAULT_METHOD))
+		method = HDD_DEFAULT_METHOD		
+	if stress_set_hdd_opts(method) is not 0:
+		logging.warning("{}: Unable to set hdd-method {}".format(STRESS_NG_NAME,method))
+		return None
+	if hdd_bytes is None:
+		hdd_bytes = HDD_BYTES_DEFAULT
+	if stress_set_hdd_bytes(hdd_bytes) is not 0:
+			logging.warning("{}: Unable to set hdd-bytes {}. Running with stress-ng.c default".format(STRESS_NG_NAME,hdd_bytes))
+	return method
+
+_stress_ng.stress_hdd.argtype = (ARGS_T)
+def stress_hdd(method=HDD_DEFAULT_METHOD,hdd_bytes=None,counter=1,max_ops=1,instance=1,num_instances=1,do_c_print=False):
+	method = prepare_stress_hdd(method=method,hdd_bytes=hdd_bytes)
+	if method is None:
+		return 1
+	c_args_t_p = build_args_t(counter=counter,
+				 name=method,
+				 max_ops=max_ops,
+				 instance=instance,
+				 num_instances=num_instances,
+				 do_print=do_c_print)
+	
+	result = _stress_ng.stress_hdd(c_args_t_p)
+	return result
+
 
 #################
 # mem functions #
