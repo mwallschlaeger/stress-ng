@@ -5,9 +5,8 @@
 import ctypes,os,logging
 
 STRESS_NG_NAME = "STRESS_NG_BINDINGS"
-SHARED_LIB_LOCATION = "../stress-ng.so"
+SHARED_LIB_LOCATION = "stress-ng/stress-ng.so"
 
-#SHARED_LIB_LOCATION = "stress-ng/stress-ng.so"
 ''' structure used in stress-ng c code to run stress functions '''
 class ARGS_T(ctypes.Structure):
 		_fields_ = [
@@ -53,6 +52,7 @@ def build_args_t(counter=1,name="",max_ops=1,instance=1,num_instances=1,do_print
 		print_args_t(c_args_t_p)
 	return c_args_t_p
 
+<<<<<<< HEAD
 ''' build ctypes HDD_OPTS_T struct required by HDD related stress-ng functions '''
 def build_hdd_opts_t(method):
 	#if hdd_opts == "wr-seq":
@@ -66,6 +66,8 @@ def build_hdd_opts_t(method):
 	return c_hdd_opts_t_p
 
 ''' load sharedlib '''
+=======
+>>>>>>> ad8b7ccbbbe7368b4b848f6f65e2d45feed14348
 _stress_ng = ctypes.CDLL(SHARED_LIB_LOCATION)
 
 ####################
